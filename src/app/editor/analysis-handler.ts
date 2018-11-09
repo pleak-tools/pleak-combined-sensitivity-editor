@@ -38,7 +38,7 @@ export class AnalysisHandler {
 
   init() {
     // No changes in model, so show previous analysis results
-    if (!this.getChangesInModelStatus() && Number.parseFloat(this.analysisInput.epsilon) == Number.parseFloat($('.epsilon-input').val()) && Number.parseFloat(this.analysisInput.beta) == Number.parseFloat($('.beta-input').val()) && Number.parseFloat(this.analysisInput.distanceG) == Number.parseFloat($('.distanceG-input').val()) && this.analysisInput.attackerSettings == this.elementsHandler.attackerSettingsHandler.getAttackerSettings()) {
+    if (!this.getChangesInModelStatus() && Number.parseFloat(this.analysisInput.epsilon) == Number.parseFloat($('.epsilon-input').val()) && Number.parseFloat(this.analysisInput.beta) == Number.parseFloat($('.beta-input').val()) && this.analysisInput.attackerSettings == this.elementsHandler.attackerSettingsHandler.getAttackerSettings()) {
       this.showAnalysisResults();
       return;
     }
@@ -120,7 +120,7 @@ export class AnalysisHandler {
           }
         }
       }
-      fullQuery = query; //"INSERT INTO " + taskName + " " + query;
+      fullQuery = "INSERT INTO " + taskName + " " + query; //query
       this.analysisInput.queries += fullQuery + "\n\n";
       this.analysisInput.schemas += schemasQuery;
       this.analysisInputTasksOrder.push({id: taskId, order: Math.abs(counter-amount)});
@@ -130,9 +130,8 @@ export class AnalysisHandler {
           this.analysisInput.queries.trim();
           this.analysisInput.epsilon = Number.parseFloat($('.epsilon-input').val());
           this.analysisInput.beta = Number.parseFloat($('.beta-input').val());
-          this.analysisInput.distanceG = Number.parseFloat($('.distanceG-input').val());
+          this.analysisInput.distanceG = 1.0; //Number.parseFloat($('.distanceG-input').val());
           this.analysisInput.attackerSettings = this.elementsHandler.attackerSettingsHandler.getAttackerSettings();
-          //'person2diseasestate.person_id exact;\n-- from 01-01-2000 to 01-01-2020\nperson2diseasestate.transitiondate range 36524 43829;\nperson2diseasestate.diseasestate approx 4;\nperson2diseaseriskfactor.person_id exact;\nperson2diseaseriskfactor.riskfactor_id approx 7;\nperson.residence approx 15;'; //this.elementsHandler.attackerSettingsHandler.getAttackerSettings();
           $('.analysis-spinner').fadeIn();
           $('#analysis-results-panel-content').html('');
           this.runAnalysisREST(this.analysisInput);
@@ -169,7 +168,7 @@ export class AnalysisHandler {
         let results = []
         for (let line of lines) {
           let parts = line.split(String.fromCharCode(31));
-          let taskName = "Collect_SIRD_counts"//parts[0];
+          let taskName = parts[0];
           let taskHandler = this.getTaskHandlerByPreparedTaskName(taskName);
           let order = 0;
           let taskWithTaskId = this.analysisInputTasksOrder.filter(function( obj ) {
