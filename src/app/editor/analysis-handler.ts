@@ -82,6 +82,15 @@ export class AnalysisHandler {
       this.init();
       $('#analysis-results-panel').show();
     });
+    $('.beta-toggle').bootstrapToggle();
+    $('.beta-toggle').change(() => {
+      $('.beta-input').toggle();
+      if (!$('.beta-toggle').prop('checked')) {
+        $('.beta-input').val(-1);
+      } else {
+        $('.beta-input').val(0.1);
+      }
+    });
     $('#analysis-panel').on('click', '#analysis-settings-hide-button', (e) => {
       e.preventDefault();
       e.stopPropagation();
