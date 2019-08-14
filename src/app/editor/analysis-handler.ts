@@ -110,8 +110,16 @@ export class AnalysisHandler {
   prepareTaskAnalyzerInput(taskId: string, counter: number, amount: number) {
     const task = this.getTaskHandlerByTaskId(taskId);
     const taskQuery = task.getPreparedQuery();
+    let taskSchema = task.getPreparedSchema();
     if (taskQuery && taskQuery.success) {
-      const taskName = taskQuery.success.taskName;
+      let taskName = null;
+      let taskSchemaCmd = "";
+      if (taskSchema && taskSchema.success) {
+        taskName = taskSchema.success.tableName;
+        taskSchemaCmd = taskSchema.success.schema;
+      } else {
+        taskName = taskQuery.success.taskName;
+      }
       const query = taskQuery.success.query;
       let fullQuery = '';
       const inputIds = task.getTaskInputObjects().map(a => a.id);
@@ -134,6 +142,7 @@ export class AnalysisHandler {
       fullQuery = 'INSERT INTO ' + taskName + ' ' + query; //query
       this.analysisInput.queries += fullQuery + '\n\n';
       this.analysisInput.schemas += schemasQuery;
+      this.analysisInput.schemas += taskSchemaCmd;
       this.analysisInputTasksOrder.push({id: taskId, order: Math.abs(counter - amount)});
       this.canvas.removeMarker(taskId, 'highlight-general-error');
       if (counter === 1) {
@@ -180,7 +189,16 @@ export class AnalysisHandler {
         for (const line of lines) {
           const parts = line.split(String.fromCharCode(31));
           const taskName = parts[0];
-          const taskHandler = this.getTaskHandlerByPreparedTaskName(taskName);
+          let taskHandler = this.getTaskHandlerByPreparedTaskName(taskName);
+          if (!taskHandler) {
+            let taskHandlers = this.getAllModelTaskHandlers();
+            for (let sTaskHandler of taskHandlers) {
+              let taskSchema = sTaskHandler.getPreparedSchema();
+              if (taskSchema.success.tableName == taskName) {
+                taskHandler = sTaskHandler;
+              }
+            }
+          }
           let order = 0;
           const taskWithTaskId = this.analysisInputTasksOrder.filter(function( obj ) {
             return obj.id == taskHandler.task.id;
@@ -237,12 +255,16 @@ export class AnalysisHandler {
         });
         if (matchingTask.length > 0) {
           const resultObject = matchingTask[0];
+          let resultObjectName = resultObject.name;
+          if (this.getTaskHandlerByTaskId(resultObject.id).getPreparedSchema().success) {
+            resultObjectName = this.getTaskHandlerByTaskId(resultObject.id).getPreparedSchema().success.tableName;
+          }
 
           let resultDiv = `
            <div class="" id="` + resultObject.id + `-analysis-results">
               <div class="panel panel-default" style="cursor:pointer; margin-bottom:10px!important" data-toggle="collapse" data-target="#` + resultObject.id + `-panel" aria-expanded="true" aria-controls="` + resultObject.id + `-panel">
                 <div align="center" class="panel-heading" style="background-color:#eae8e8">
-                  <b><span style="font-size: 16px; color: #666">` + resultObject.name + `</span></b>
+                  <b><span style="font-size: 16px; color: #666">` + resultObjectName + `</span></b>
                 </div>
               </div>
               <div align="left" class="collapse in" id="` + resultObject.id + `-panel" style="margin-bottom: 10px; margin-top: -10px">`;
