@@ -174,7 +174,7 @@ export class AnalysisHandler {
       (success: HttpResponse<any>) => {
         this.formatAnalysisResults(success);
       },
-      (fail: HttpResponse<any>) => {
+      (fail: HttpErrorResponse) => {
         this.formatAnalysisErrorResults(fail);
       }
     );
