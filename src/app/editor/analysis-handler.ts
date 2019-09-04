@@ -32,7 +32,7 @@ export class AnalysisHandler {
   editor: EditorComponent;
   elementsHandler: any;
 
-  analysisInput: any = {children: [], queries: '', epsilon: 1, beta: 0.1, schemas: '', attackerSettings: '', distanceG: 1.0};
+  analysisInput: any = { children: [], queries: '', epsilon: 1, beta: 0.1, schemas: '', attackerSettings: '', distanceG: 1.0, errorUB: 0.9, sigmoidBeta: 0.01, sigmoidPrecision: 5.0, dateStyle: "European" };
   analysisResult: any = null;
   analysisInputTasksOrder: any = [];
 
@@ -47,7 +47,7 @@ export class AnalysisHandler {
     }
 
     // Changes in model, so run new analysis
-    this.analysisInput = {children: [], queries: '', epsilon: 1, beta: 0.1, schemas: '', attackerSettings: '', distanceG: 1.0};
+    this.analysisInput = { children: [], queries: '', epsilon: 1, beta: 0.1, schemas: '', attackerSettings: '', distanceG: 1.0, errorUB: 0.9, sigmoidBeta: 0.01, sigmoidPrecision: 5.0, dateStyle: "European" };
     let counter = this.getAllModelTaskHandlers().length;
     this.analysisErrors = [];
     for (const taskId of this.getAllModelTaskHandlers().map(a => a.task.id)) {
@@ -128,7 +128,7 @@ export class AnalysisHandler {
       for (const inputId of inputIds) {
         const dataObjectQueries = this.getPreparedQueriesOfDataObjectByDataObjectId(inputId);
         if (dataObjectQueries) {
-          const alreadyAddedDataObject = this.analysisInput.children.filter(function( obj ) {
+          const alreadyAddedDataObject = this.analysisInput.children.filter(function (obj) {
             return obj.id == inputId;
           });
           if (alreadyAddedDataObject.length === 0) {
@@ -144,7 +144,7 @@ export class AnalysisHandler {
       this.analysisInput.queries += fullQuery + '\n\n';
       this.analysisInput.schemas += schemasQuery;
       this.analysisInput.schemas += taskSchemaCmd;
-      this.analysisInputTasksOrder.push({id: taskId, order: Math.abs(counter - amount)});
+      this.analysisInputTasksOrder.push({ id: taskId, order: Math.abs(counter - amount) });
       this.canvas.removeMarker(taskId, 'highlight-general-error');
       if (counter === 1) {
         if (this.analysisErrors.length === 0) {
@@ -153,6 +153,10 @@ export class AnalysisHandler {
           this.analysisInput.beta = Number.parseFloat($('.beta-input').val());
           this.analysisInput.distanceG = 1.0; //Number.parseFloat($('.distanceG-input').val());
           this.analysisInput.attackerSettings = this.elementsHandler.attackerSettingsHandler.getAttackerSettings();
+          this.analysisInput.errorUB = 0.9; // TODO: read from input
+          this.analysisInput.sigmoidBeta = 0.01; // TODO: read from input
+          this.analysisInput.sigmoidPrecision = 5.0; // TODO: read from input
+          this.analysisInput.dateStyle = "European"; // TODO: read from input
           $('.analysis-spinner').fadeIn();
           $('#analysis-results-panel-content').html('');
           this.runAnalysisREST(this.analysisInput);
@@ -170,7 +174,7 @@ export class AnalysisHandler {
 
   // Call to the analyser
   runAnalysisREST(postData: any) {
-    this.editor.http.post(config.backend.host + '/rest/sql-privacy/analyze-combined-sensitivity', postData, AuthService.loadRequestOptions({observe: 'response'})).subscribe(
+    this.editor.http.post(config.backend.host + '/rest/sql-privacy/analyze-combined-sensitivity', postData, AuthService.loadRequestOptions({ observe: 'response' })).subscribe(
       (success: HttpResponse<any>) => {
         this.formatAnalysisResults(success);
       },
@@ -201,16 +205,16 @@ export class AnalysisHandler {
             }
           }
           let order = 0;
-          const taskWithTaskId = this.analysisInputTasksOrder.filter(function( obj ) {
+          const taskWithTaskId = this.analysisInputTasksOrder.filter(function (obj) {
             return obj.id == taskHandler.task.id;
           });
           if (taskWithTaskId.length > 0) {
             order = taskWithTaskId[0].order;
           }
-          const taskInfo = {id: taskHandler.task.id, name: taskHandler.task.name, children: [], order: order};
+          const taskInfo = { id: taskHandler.task.id, name: taskHandler.task.name, children: [], order: order };
           for (let i = 1; i < parts.length; i++) {
             if (i == 1 || i % 5 == 1) {
-              const tbl = {tableId: 0, name: parts[i], qoutput: parts[i + 2], anoise: parts[i + 3], sensitivity: parts[i + 1], error: parts[i + 4]};
+              const tbl = { tableId: 0, name: parts[i], qoutput: parts[i + 2], anoise: parts[i + 3], sensitivity: parts[i + 1], error: parts[i + 4] };
               taskInfo.children.push(tbl);
             }
           }
@@ -241,7 +245,7 @@ export class AnalysisHandler {
     if (this.analysisResult) {
       let resultsHtml = '';
       for (let i = 0; i < this.analysisResult.length; i++) {
-        const matchingTask = this.analysisResult.filter(function( obj ) {
+        const matchingTask = this.analysisResult.filter(function (obj) {
           return obj.order == i;
         });
         if (matchingTask.length > 0) {
@@ -263,11 +267,11 @@ export class AnalysisHandler {
           for (const tblObject of resultObject.children) {
             let sensitivity: any = Number.parseFloat(tblObject.sensitivity).toFixed(5);
             sensitivity = (sensitivity == 0 ? 0 : sensitivity);
-            sensitivity = ( isNaN(sensitivity) ? '&infin;' : sensitivity );
+            sensitivity = (isNaN(sensitivity) ? '&infin;' : sensitivity);
 
             let error: any = Number.parseFloat(tblObject.error).toFixed(5);
             error = (error == 0 ? 0 : error);
-            error = ( isNaN(error) ? '&infin;' : error  + ' %' );
+            error = (isNaN(error) ? '&infin;' : error + ' %');
 
             let addedNoise: any = Number.parseFloat(tblObject.anoise).toFixed(5);
             addedNoise = (addedNoise == 0 ? 0 : addedNoise);
@@ -354,11 +358,11 @@ export class AnalysisHandler {
   // Add unique error to errors list
   addUniqueErrorToErrorsList(error: String, ids: String[]) {
     const errors = this.analysisErrors;
-    const sameErrorMsgs = errors.filter(function( obj ) {
+    const sameErrorMsgs = errors.filter(function (obj) {
       return obj.error == error && obj.object.toString() === ids.toString();
     });
     if (sameErrorMsgs.length === 0) {
-      errors.push({error: error, object: ids});
+      errors.push({ error: error, object: ids });
     }
   }
 
