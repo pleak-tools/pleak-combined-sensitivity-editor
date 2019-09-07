@@ -243,23 +243,18 @@ export class AnalysisHandler {
     if (success.status === 200) {
       const resultsString = success.body.result;
       if (resultsString) {
-        let lines = resultsString.split(String.fromCharCode(30));
-        const results = [];
-        console.log(lines);
+        const lines = resultsString.split(String.fromCharCode(30));
 
-        lines = lines.map(
+        this.analysisResult = lines.map(
           (line) => {
             return line.split(String.fromCharCode(31)).map(
               (item) => {
                 return item.split(String.fromCharCode(29));
               }
-              );
+            );
           }
         );
 
-        console.log(lines);
-
-        this.analysisResult = lines;
         this.setChangesInModelStatus(false);
 
         this.showAnalysisResults();
