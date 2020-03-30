@@ -1,4 +1,4 @@
-# Pleak Combined Sensitivity Editor
+# Pleak Combined Sensitivity Editor [DEPRECATED]
 
 This project is the front-end part of the [combined sensitivity analysis tool for pleak.io](https://github.com/pleak-tools/pleak-sql-analysis/tree/master/banach) that is a part of the [SQL analysis tool for pleak.io](https://github.com/pleak-tools/pleak-sql-analysis).
 
